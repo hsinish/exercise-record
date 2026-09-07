@@ -26,7 +26,6 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 自訂滾動條，讓視覺更乾淨 */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -41,11 +40,18 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        /* 確保長文字與英文網址能夠正常自動換行與斷詞 */
         .break-words-custom {
             word-break: break-word;
             overflow-wrap: break-word;
             word-wrap: break-word;
+        }
+        /* Mobile touch action menu styles */
+        .mobile-action-overlay {
+            animation: fadeIn 0.15s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
@@ -72,7 +78,7 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden relative">
-        <!-- 側邊欄 (列表區)：在手機版依據 activeView 顯示或隱藏 -->
+        <!-- 側邊欄 (列表區) -->
         <aside id="sidebarPanel" class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 absolute md:relative inset-0 z-20 transition-transform duration-300 transform translate-x-0">
             <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center space-x-2">
                 <button type="button" onclick="openAddModal()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center space-x-2">
@@ -95,7 +101,7 @@
             </div>
         </aside>
 
-        <!-- 主畫面 (對話區)：在手機版依據 activeView 顯示或隱藏 -->
+        <!-- 主畫面 (對話區) -->
         <main id="mainChatPanel" class="flex-1 flex flex-col bg-gray-50 h-full overflow-hidden absolute md:relative inset-0 z-30 transition-transform duration-300 transform translate-x-full md:translate-x-0">
             
             <div id="noChatSelected" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gray-50 z-10">
@@ -110,7 +116,6 @@
                 <!-- 對話標頭 -->
                 <div class="bg-white border-b border-gray-200 px-4 sm:px-6 py-3.5 flex items-center justify-between shadow-xs shrink-0">
                     <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                        <!-- 返回按鈕 (僅在手機版顯示) -->
                         <button onclick="backToList()" class="md:hidden bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-xl flex items-center justify-center transition-colors shrink-0" title="返回列表">
                             <i class="fa-solid fa-arrow-left text-sm"></i>
                         </button>
@@ -211,8 +216,7 @@
         <div class="bg-white rounded-2xl w-full max-w-lg mx-4 shadow-2xl border border-gray-100 overflow-hidden transform transition-all scale-95 duration-200">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                 <div class="flex items-center space-x-3">
-                    <h3 class="font-bold text-gray-900 text-lg">編輯內容</h3>
-                    <span id="editMessageRoleLabel" class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-md font-medium"></span>
+                    <h3 class="font-bold text-gray-900 text-lg">編輯內容與類型</h3>
                 </div>
                 <button type="button" onclick="closeEditMessageModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -220,8 +224,16 @@
             </div>
             <form id="editMessageForm" onsubmit="handleSaveEditedMessage(event)" class="p-6 space-y-4">
                 <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">發話角色 / 類型</label>
+                    <select id="editMessageRoleSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                        <option value="helper">助人者 (左側)</option>
+                        <option value="client">個案 (右側)</option>
+                        <option value="teacher">註解 (置中)</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">修改文字</label>
-                    <textarea id="editMessageInput" rows="5" required class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all resize-none shadow-inner"></textarea>
+                    <textarea id="editMessageInput" rows="4" required class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all resize-none shadow-inner"></textarea>
                 </div>
                 <div class="pt-2 flex space-x-3">
                     <button type="button" onclick="closeEditMessageModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl text-sm transition-colors">
@@ -229,6 +241,42 @@
                     </button>
                     <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-4 rounded-xl text-sm transition-all shadow-md">
                         儲存變更
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 插入訊息 Modal -->
+    <div id="insertMessageModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-lg mx-4 shadow-2xl border border-gray-100 overflow-hidden transform transition-all scale-95 duration-200">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                <div class="flex items-center space-x-3">
+                    <h3 class="font-bold text-gray-900 text-lg">在此項目下方插入新訊息</h3>
+                </div>
+                <button type="button" onclick="closeInsertMessageModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="insertMessageForm" onsubmit="handleSaveInsertedMessage(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">發話角色 / 類型</label>
+                    <select id="insertMessageRoleSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                        <option value="helper">助人者 (左側)</option>
+                        <option value="client">個案 (右側)</option>
+                        <option value="teacher">註解 (置中)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">訊息內容</label>
+                    <textarea id="insertMessageInput" rows="4" required placeholder="請輸入要插入的內容..." class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all resize-none shadow-inner"></textarea>
+                </div>
+                <div class="pt-2 flex space-x-3">
+                    <button type="button" onclick="closeInsertMessageModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl text-sm transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-4 rounded-xl text-sm transition-all shadow-md">
+                        確認插入
                     </button>
                 </div>
             </form>
@@ -250,22 +298,20 @@
     </div>
 
     <script>
-        // 資料結構
         let contacts = [];
         let currentContactId = null;
         let editingMessageIndex = null;
-        let mobileView = 'list'; // 'list' 或 'chat'
+        let insertingAfterIndex = null;
+        let mobileView = 'list';
         const STORAGE_KEY = 'consultation_chat_app_v2';
 
         window.onload = function() {
             loadData();
             renderContacts();
             
-            // 如果沒有任何聯絡人，自動新增一個預設假資料供使用者參考使用
             if (contacts.length === 0) {
                 createDefaultSampleData();
             } else if (!currentContactId && contacts.length > 0) {
-                // 若有聯絡人但未選取，預設選取第一個 (僅在桌機預設選取，手機保持在列表)
                 if (window.innerWidth >= 768) {
                     selectContact(contacts[0].id);
                 } else {
@@ -273,7 +319,6 @@
                 }
             }
 
-            // 監聽螢幕寬度改變，確保版面正確反應
             window.addEventListener('resize', () => {
                 if (window.innerWidth >= 768) {
                     document.getElementById('sidebarPanel').classList.remove('-translate-x-full');
@@ -283,7 +328,6 @@
                 }
             });
 
-            // 監聽 Enter 鍵發送訊息 (Shift+Enter 換行)
             document.getElementById('messageInput').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -292,7 +336,6 @@
             });
         };
 
-        // 更新手機版視圖狀態
         function updateMobileView(view) {
             mobileView = view;
             const sidebar = document.getElementById('sidebarPanel');
@@ -312,12 +355,10 @@
             }
         }
 
-        // 返回列表 (手機版專用)
         function backToList() {
             updateMobileView('list');
         }
 
-        // 建立預設的範例假資料
         function createDefaultSampleData() {
             const sampleContact = {
                 id: "T01",
@@ -364,7 +405,6 @@
             }
         }
 
-        // LocalStorage 資料存取
         function loadData() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
@@ -375,7 +415,7 @@
                     contacts = [];
                 }
             } else {
-                contacts = []; // 預設空資料
+                contacts = [];
             }
         }
 
@@ -439,7 +479,6 @@
                 item.className = `p-4 cursor-pointer transition-all flex items-center justify-between group hover:bg-gray-50 border-l-4 ${isSelected ? 'bg-brand-50/60 border-brand-500' : 'border-transparent'}`;
                 item.onclick = () => selectContact(contact.id);
 
-                // 左側：頭像與名稱
                 const infoDiv = document.createElement('div');
                 infoDiv.className = "flex items-center space-x-3 flex-1 min-w-0";
                 infoDiv.innerHTML = `
@@ -452,9 +491,8 @@
                     </div>
                 `;
 
-                // 右側：操作按鈕 (上下移、刪除)
                 const actionDiv = document.createElement('div');
-                actionDiv.className = `flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2 ${isSelected ? 'opacity-100' : ''}`;
+                actionDiv.className = `flex flex-col space-y-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 ml-2`;
                 
                 const stopPropagation = (e) => e.stopPropagation();
 
@@ -534,7 +572,6 @@
             renderMessages();
             renderContacts(); 
             
-            // 切換手機版到對話視圖
             updateMobileView('chat');
         }
 
@@ -559,196 +596,392 @@
                 const row = document.createElement('div');
                 const escapedText = escapeHtml(msg.text).replace(/\n/g, '<br>');
 
+                const orderButtonsHtml = `
+                    <div class="flex items-center space-x-1 mr-1">
+                        <button onclick="moveMessage(${index}, -1)" class="w-5 h-5 rounded flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors disabled:opacity-30" title="上移" ${index === 0 ? 'disabled' : ''}>
+                            <i class="fa-solid fa-arrow-up text-[9px]"></i>
+                        </button>
+                        <button onclick="moveMessage(${index}, 1)" class="w-5 h-5 rounded flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors disabled:opacity-30" title="下移" ${index === contact.messages.length - 1 ? 'disabled' : ''}>
+                            <i class="fa-solid fa-arrow-down text-[9px]"></i>
+                        </button>
+                    </div>
+                `;
+
+                // 綁定長按事件（適用於手機版觸控長按，桌機也可支援或使用 hover）
+                let pressTimer = null;
+                const attachLongPress = (el) => {
+                    const startPress = (e) => {
+                        // 如果點擊的是按鈕本身則不觸發長按彈窗
+                        if (e.target.closest('button')) return;
+                        pressTimer = setTimeout(() => {
+                            showMobileActionMenu(index);
+                        }, 500); // 500ms 長按
+                    };
+                    const cancelPress = () => {
+                        if (pressTimer) {
+                            clearTimeout(pressTimer);
+                            pressTimer = null;
+                        }
+                    };
+                    el.addEventListener('touchstart', startPress);
+                    el.addEventListener('touchend', cancelPress);
+                    el.addEventListener('touchmove', cancelPress);
+                    el.addEventListener('mousedown', startPress);
+                    el.addEventListener('mouseup', cancelPress);
+                    el.addEventListener('mouseleave', cancelPress);
+                };
+
                 if (msg.role === 'helper') {
-                    // 助人者：左側
-                    row.className = "flex items-start space-x-2 w-full group relative mb-2.5";
+                    row.className = "flex items-start space-x-2 w-full group relative mb-4 select-none";
                     row.innerHTML = `
                         <div class="w-7 h-7 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-[11px] shrink-0 border border-brand-200 shadow-sm mt-0.5" title="助人者">
                             ${escapeHtml(contact.id.substring(0, 3))}
                         </div>
-                        <div class="flex flex-col items-start max-w-[82%] sm:max-w-[78%]">
+                        <div class="flex flex-col items-start max-w-[85%] sm:max-w-[78%] bubble-container" data-index="${index}">
                             <div class="flex items-center space-x-2 mb-0.5 ml-1">
                                 <span class="text-[11px] font-bold text-brand-700">助人者 (${escapeHtml(contact.name)})</span>
                                 <span class="text-[9px] text-gray-400">${msg.time}</span>
                             </div>
-                            <div class="bg-brand-600 text-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-sm shadow-sm leading-relaxed break-words-custom text-left">
+                            <div class="bg-brand-600 text-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-sm shadow-sm leading-relaxed break-words-custom text-left cursor-pointer md:cursor-auto">
                                 ${escapedText}
                             </div>
-                            <div class="flex items-center space-x-3 mt-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="openEditMessageModal(${index})" class="text-[11px] text-gray-400 hover:text-brand-600 flex items-center space-x-1 transition-colors">
-                                    <i class="fa-solid fa-pen"></i><span>編輯</span>
+                            <div class="hidden md:flex flex-wrap items-center gap-1.5 mt-1.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-100/90 p-1.5 rounded-lg border border-gray-200/60 shadow-xs">
+                                ${orderButtonsHtml}
+                                <button onclick="openInsertMessageModal(${index})" class="text-[11px] text-gray-600 hover:text-brand-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="在此下方插入">
+                                    <i class="fa-solid fa-plus text-[9px]"></i><span>插入</span>
                                 </button>
-                                <button onclick="deleteMessage(${index})" class="text-[11px] text-gray-400 hover:text-red-600 flex items-center space-x-1 transition-colors">
-                                    <i class="fa-solid fa-trash"></i><span>刪除</span>
+                                <button onclick="openEditMessageModal(${index})" class="text-[11px] text-gray-600 hover:text-blue-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="編輯">
+                                    <i class="fa-solid fa-pen text-[9px]"></i><span>編輯</span>
+                                </button>
+                                <button onclick="deleteMessage(${index})" class="text-[11px] text-gray-600 hover:text-red-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="刪除">
+                                    <i class="fa-solid fa-trash text-[9px]"></i><span>刪除</span>
                                 </button>
                             </div>
+                            <div class="text-[10px] text-gray-400 mt-1 ml-1 md:hidden">💡 長按訊息可進行編輯、插入或刪除</div>
                         </div>
                     `;
                 } else if (msg.role === 'client') {
-                    // 個案：右側
-                    row.className = "flex items-start justify-end space-x-2 w-full group relative mb-2.5";
+                    row.className = "flex items-start justify-end space-x-2 w-full group relative mb-4 select-none";
                     row.innerHTML = `
-                        <div class="flex flex-col items-end max-w-[82%] sm:max-w-[78%]">
-                            <div class="flex items-center justify-end space-x-2 mb-0.5 mr-1">
+                        <div class="flex flex-col items-end max-w-[85%] sm:max-w-[78%] bubble-container" data-index="${index}">
+                            <div class="flex items-center space-x-2 mb-0.5 mr-1">
                                 <span class="text-[9px] text-gray-400">${msg.time}</span>
                                 <span class="text-[11px] font-bold text-blue-700">個案</span>
                             </div>
-                            <div class="bg-white border border-gray-200 text-gray-800 px-3.5 py-2 rounded-2xl rounded-tr-sm text-sm shadow-sm leading-relaxed break-words-custom text-left">
+                            <div class="bg-blue-600 text-white px-3.5 py-2 rounded-2xl rounded-tr-sm text-sm shadow-sm leading-relaxed break-words-custom text-left cursor-pointer md:cursor-auto">
                                 ${escapedText}
                             </div>
-                            <div class="flex items-center justify-end space-x-3 mt-1 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="openEditMessageModal(${index})" class="text-[11px] text-gray-400 hover:text-brand-600 flex items-center space-x-1 transition-colors">
-                                    <i class="fa-solid fa-pen"></i><span>編輯</span>
+                            <div class="hidden md:flex flex-wrap items-center justify-end gap-1.5 mt-1.5 mr-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-100/90 p-1.5 rounded-lg border border-gray-200/60 shadow-xs">
+                                ${orderButtonsHtml}
+                                <button onclick="openInsertMessageModal(${index})" class="text-[11px] text-gray-600 hover:text-brand-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="在此下方插入">
+                                    <i class="fa-solid fa-plus text-[9px]"></i><span>插入</span>
                                 </button>
-                                <button onclick="deleteMessage(${index})" class="text-[11px] text-gray-400 hover:text-red-600 flex items-center space-x-1 transition-colors">
-                                    <i class="fa-solid fa-trash"></i><span>刪除</span>
+                                <button onclick="openEditMessageModal(${index})" class="text-[11px] text-gray-600 hover:text-blue-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="編輯">
+                                    <i class="fa-solid fa-pen text-[9px]"></i><span>編輯</span>
+                                </button>
+                                <button onclick="deleteMessage(${index})" class="text-[11px] text-gray-600 hover:text-red-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="刪除">
+                                    <i class="fa-solid fa-trash text-[9px]"></i><span>刪除</span>
                                 </button>
                             </div>
+                            <div class="text-[10px] text-gray-400 mt-1 mr-1 md:hidden">💡 長按訊息可進行編輯、插入或刪除</div>
                         </div>
                         <div class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[11px] shrink-0 border border-blue-200 shadow-sm mt-0.5" title="個案">
                             個
                         </div>
                     `;
-                } else if (msg.role === 'teacher') {
-                    // 註解：置中
-                    row.className = "w-full my-2.5 flex justify-center group relative";
+                } else {
+                    // 註解角色 (置中)
+                    row.className = "flex flex-col items-center w-full group relative my-3 select-none";
                     row.innerHTML = `
-                        <div class="bg-amber-50 border border-amber-200 px-4 py-3 rounded-xl max-w-2xl shadow-sm w-full relative">
-                            <div class="flex items-start space-x-2.5">
-                                <div class="bg-amber-200 text-amber-700 w-6 h-6 rounded-full flex items-center justify-center shrink-0 shadow-inner mt-0.5">
-                                    <i class="fa-solid fa-note-sticky text-[10px]"></i>
-                                </div>
-                                <div class="flex-1 leading-relaxed text-sm text-amber-900 pr-16 break-words-custom">
-                                    <span class="font-bold mr-1">[註解]</span> ${escapedText}
-                                </div>
+                        <div class="w-full max-w-xl px-4 py-2.5 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-900 text-xs sm:text-sm shadow-xs relative text-center leading-relaxed bubble-container cursor-pointer md:cursor-auto" data-index="${index}">
+                            <div class="flex items-center justify-center space-x-1 text-[11px] font-bold text-amber-700 mb-1">
+                                <i class="fa-solid fa-note-sticky"></i>
+                                <span>註解</span>
                             </div>
-                            <div class="absolute bottom-2 right-3 flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-50 pl-2">
-                                <span class="text-[10px] text-amber-400 mr-1">${msg.time}</span>
-                                <button onclick="openEditMessageModal(${index})" class="text-[11px] text-amber-700 hover:text-amber-900 flex items-center space-x-1 transition-colors font-medium">
-                                    <i class="fa-solid fa-pen"></i><span>編輯</span>
-                                </button>
-                                <button onclick="deleteMessage(${index})" class="text-[11px] text-amber-700 hover:text-red-600 flex items-center space-x-1 transition-colors font-medium">
-                                    <i class="fa-solid fa-trash"></i><span>刪除</span>
-                                </button>
-                            </div>
+                            <div class="break-words-custom">${escapedText}</div>
                         </div>
+                        <div class="hidden md:flex flex-wrap items-center justify-center gap-1.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-100/60 p-1.5 rounded-lg border border-amber-200/50 shadow-xs">
+                            ${orderButtonsHtml}
+                            <button onclick="openInsertMessageModal(${index})" class="text-[11px] text-gray-700 hover:text-brand-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="在此下方插入">
+                                <i class="fa-solid fa-plus text-[9px]"></i><span>插入</span>
+                            </button>
+                            <button onclick="openEditMessageModal(${index})" class="text-[11px] text-gray-700 hover:text-blue-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="編輯">
+                                <i class="fa-solid fa-pen text-[9px]"></i><span>編輯</span>
+                            </button>
+                            <button onclick="deleteMessage(${index})" class="text-[11px] text-gray-700 hover:text-red-600 hover:bg-white px-2 py-0.5 rounded transition-colors flex items-center space-x-1 font-medium" title="刪除">
+                                <i class="fa-solid fa-trash text-[9px]"></i><span>刪除</span>
+                            </button>
+                        </div>
+                        <div class="text-[10px] text-gray-400 mt-1 md:hidden">💡 長按註解可進行編輯、插入或刪除</div>
                     `;
                 }
+
                 container.appendChild(row);
+
+                // 為該訊息區塊綁定長按觸發
+                const containerEl = row.querySelector('.bubble-container');
+                if (containerEl) {
+                    attachLongPress(containerEl);
+                }
             });
 
             container.scrollTop = container.scrollHeight;
         }
 
+        // 手機版長按彈出的操作選單 Modal
+        function showMobileActionMenu(index) {
+            const contact = contacts.find(c => c.id === currentContactId);
+            if (!contact) return;
+            const msg = contact.messages[index];
+            if (!msg) return;
+
+            // 移除舊有的 mobile action menu 如果存在
+            const existingMenu = document.getElementById('mobileActionMenuModal');
+            if (existingMenu) existingMenu.remove();
+
+            const roleName = msg.role === 'helper' ? '助人者' : msg.role === 'client' ? '個案' : '註解';
+            const snippetText = msg.text.length > 30 ? msg.text.substring(0, 30) + '...' : msg.text;
+
+            const modalHtml = `
+                <div id="mobileActionMenuModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center z-50 mobile-action-overlay">
+                    <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-sm mx-0 sm:mx-4 shadow-2xl border border-gray-100 overflow-hidden p-4 space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                            <div>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700">${roleName}訊息選項</span>
+                                <p class="text-xs text-gray-500 mt-1 truncate max-w-[250px]">「${escapeHtml(snippetText)}」</p>
+                            </div>
+                            <button onclick="closeMobileActionMenu()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg">
+                                <i class="fa-solid fa-xmark text-base"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <div class="col-span-2 flex items-center justify-between bg-gray-50 p-2 rounded-xl border border-gray-200">
+                                <span class="text-xs font-medium text-gray-700 ml-1">調整上下順序</span>
+                                <div class="flex items-center space-x-2">
+                                    <button onclick="closeMobileActionMenu(); moveMessage(${index}, -1);" class="bg-white hover:bg-gray-100 text-gray-700 text-xs px-3 py-1.5 rounded-lg border border-gray-300 shadow-xs flex items-center space-x-1 disabled:opacity-30" ${index === 0 ? 'disabled' : ''}>
+                                        <i class="fa-solid fa-arrow-up"></i><span>上移</span>
+                                    </button>
+                                    <button onclick="closeMobileActionMenu(); moveMessage(${index}, 1);" class="bg-white hover:bg-gray-100 text-gray-700 text-xs px-3 py-1.5 rounded-lg border border-gray-300 shadow-xs flex items-center space-x-1 disabled:opacity-30" ${index === contact.messages.length - 1 ? 'disabled' : ''}>
+                                        <i class="fa-solid fa-arrow-down"></i><span>下移</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button onclick="closeMobileActionMenu(); openInsertMessageModal(${index});" class="bg-brand-50 hover:bg-brand-100 text-brand-700 font-medium py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 border border-brand-200 transition-colors">
+                                <i class="fa-solid fa-plus"></i><span>在此下方插入</span>
+                            </button>
+                            <button onclick="closeMobileActionMenu(); openEditMessageModal(${index});" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 border border-blue-200 transition-colors">
+                                <i class="fa-solid fa-pen"></i><span>編輯此訊息</span>
+                            </button>
+                            
+                            <button onclick="closeMobileActionMenu(); deleteMessage(${index});" class="col-span-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 border border-red-200 transition-colors">
+                                <i class="fa-solid fa-trash-can"></i><span>刪除此訊息</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // 點擊背景可關閉
+            document.getElementById('mobileActionMenuModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeMobileActionMenu();
+                }
+            });
+        }
+
+        function closeMobileActionMenu() {
+            const menu = document.getElementById('mobileActionMenuModal');
+            if (menu) menu.remove();
+        }
+
+        function moveMessage(index, direction) {
+            const contact = contacts.find(c => c.id === currentContactId);
+            if (!contact) return;
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= contact.messages.length) return;
+
+            const temp = contact.messages[index];
+            contact.messages[index] = contact.messages[targetIndex];
+            contact.messages[targetIndex] = temp;
+
+            saveData();
+            renderMessages();
+        }
+
         function handleSendMessage(e) {
             e.preventDefault();
-            if (!currentContactId) return;
+            const contact = contacts.find(c => c.id === currentContactId);
+            if (!contact) return;
 
-            const inputEl = document.getElementById('messageInput');
-            const text = inputEl.value.trim();
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
             if (!text) return;
 
-            const roleRadios = document.getElementsByName('speakerRole');
-            let selectedRole = 'helper';
-            for (const r of roleRadios) {
-                if (r.checked) {
-                    selectedRole = r.value;
-                    break;
-                }
-            }
+            const roleRadio = document.querySelector('input[name="speakerRole"]:checked');
+            const role = roleRadio ? roleRadio.value : 'helper';
 
             const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-            const contact = contacts.find(c => c.id === currentContactId);
-            if (contact) {
-                contact.messages.push({
-                    role: selectedRole,
-                    text: text,
-                    time: timeStr
-                });
+            contact.messages.push({
+                role: role,
+                text: text,
+                time: timeStr
+            });
 
-                inputEl.value = '';
-                inputEl.style.height = 'auto';
-                renderMessages();
-                renderContacts(); 
-                saveData(); 
-            }
+            input.value = '';
+            input.focus();
+            saveData();
+            renderMessages();
+            renderContacts();
         }
 
         function clearCurrentChat() {
             const contact = contacts.find(c => c.id === currentContactId);
-            if (contact && contact.messages.length > 0) {
-                if(confirm("確定要清空目前對話視窗內的所有演練紀錄嗎？")) {
-                    contact.messages = [];
-                    renderMessages();
-                    renderContacts();
-                    saveData();
-                }
+            if (!contact) return;
+
+            if (confirm(`確定要清空「${contact.name}」的所有演練紀錄嗎？`)) {
+                contact.messages = [];
+                saveData();
+                renderMessages();
+                renderContacts();
             }
         }
 
         function deleteMessage(index) {
             const contact = contacts.find(c => c.id === currentContactId);
             if (!contact) return;
-            
-            if(confirm("確定要刪除這筆紀錄嗎？")) {
+
+            if (confirm("確定要刪除這筆紀錄嗎？")) {
                 contact.messages.splice(index, 1);
+                saveData();
                 renderMessages();
                 renderContacts();
-                saveData();
             }
         }
 
         function openEditMessageModal(index) {
             const contact = contacts.find(c => c.id === currentContactId);
-            if (!contact || !contact.messages[index]) return;
+            if (!contact) return;
+            const msg = contact.messages[index];
+            if (!msg) return;
 
             editingMessageIndex = index;
-            const msg = contact.messages[index];
-
+            document.getElementById('editMessageRoleSelect').value = msg.role;
             document.getElementById('editMessageInput').value = msg.text;
-            
-            let roleName = "助人者 (左側)";
-            if (msg.role === 'client') roleName = "個案 (右側)";
-            if (msg.role === 'teacher') roleName = "註解 (置中)";
-            document.getElementById('editMessageRoleLabel').innerText = `目前角色: ${roleName}`;
 
-            showModal('editMessageModal');
+            const modal = document.getElementById('editMessageModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
         }
 
         function closeEditMessageModal() {
-            hideModal('editMessageModal');
-            editingMessageIndex = null;
+            const modal = document.getElementById('editMessageModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                editingMessageIndex = null;
+            }, 200);
         }
 
         function handleSaveEditedMessage(e) {
             e.preventDefault();
-            if (editingMessageIndex === null) return;
-
             const contact = contacts.find(c => c.id === currentContactId);
-            if (!contact || !contact.messages[editingMessageIndex]) return;
+            if (!contact || editingMessageIndex === null) return;
 
+            const newRole = document.getElementById('editMessageRoleSelect').value;
             const newText = document.getElementById('editMessageInput').value.trim();
-            if (!newText) {
-                showAlert("內容不能為空", "請輸入內容或點擊取消", false);
-                return;
-            }
+            if (!newText) return;
 
+            contact.messages[editingMessageIndex].role = newRole;
             contact.messages[editingMessageIndex].text = newText;
-            closeEditMessageModal();
-            renderMessages();
+
             saveData();
+            renderMessages();
+            closeEditMessageModal();
+        }
+
+        function openInsertMessageModal(index) {
+            insertingAfterIndex = index;
+            document.getElementById('insertMessageRoleSelect').value = 'helper';
+            document.getElementById('insertMessageInput').value = '';
+
+            const modal = document.getElementById('insertMessageModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeInsertMessageModal() {
+            const modal = document.getElementById('insertMessageModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                insertingAfterIndex = null;
+            }, 200);
+        }
+
+        function handleSaveInsertedMessage(e) {
+            e.preventDefault();
+            const contact = contacts.find(c => c.id === currentContactId);
+            if (!contact || insertingAfterIndex === null) return;
+
+            const role = document.getElementById('insertMessageRoleSelect').value;
+            const text = document.getElementById('insertMessageInput').value.trim();
+            if (!text) return;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            const newMsg = {
+                role: role,
+                text: text,
+                time: timeStr
+            };
+
+            contact.messages.splice(insertingAfterIndex + 1, 0, newMsg);
+
+            saveData();
+            renderMessages();
+            renderContacts();
+            closeInsertMessageModal();
         }
 
         function openAddModal() {
-            document.getElementById('addContactForm').reset();
-            showModal('addContactModal');
-            setTimeout(() => document.getElementById('newContactId').focus(), 100);
+            document.getElementById('newContactId').value = '';
+            document.getElementById('newContactName').value = '';
+            const modal = document.getElementById('addContactModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
         }
 
         function closeAddModal() {
-            hideModal('addContactModal');
+            const modal = document.getElementById('addContactModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
         }
 
         function handleCreateContact(e) {
@@ -756,13 +989,10 @@
             const idInput = document.getElementById('newContactId').value.trim();
             const nameInput = document.getElementById('newContactName').value.trim();
 
-            if (!idInput || !nameInput) {
-                showAlert("資料不齊全", "請完整填寫編號與姓名", false);
-                return;
-            }
+            if (!idInput || !nameInput) return;
 
             if (contacts.some(c => c.id === idInput)) {
-                showAlert("編號重複", "此編號已經存在，請更換其他編號。", false);
+                showAlert("重複警告", `編號 "${idInput}" 已經存在，請使用其他編號。`, false);
                 return;
             }
 
@@ -773,56 +1003,50 @@
             };
 
             contacts.push(newContact);
-            saveData(); 
-            closeAddModal();
+            saveData();
             renderContacts();
+            closeAddModal();
             selectContact(idInput);
-        }
-
-        function showModal(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('hidden');
-            setTimeout(() => {
-                el.classList.remove('opacity-0');
-                el.firstElementChild.classList.remove('scale-95');
-                el.firstElementChild.classList.add('scale-100');
-            }, 10);
-        }
-
-        function hideModal(id) {
-            const el = document.getElementById(id);
-            el.classList.add('opacity-0');
-            el.firstElementChild.classList.remove('scale-100');
-            el.firstElementChild.classList.add('scale-95');
-            setTimeout(() => el.classList.add('hidden'), 200);
         }
 
         function showAlert(title, message, isSuccess = true) {
             document.getElementById('alertTitle').innerText = title;
             document.getElementById('alertMessage').innerText = message;
-            const iconDiv = document.getElementById('alertIcon');
+            const iconEl = document.getElementById('alertIcon');
             if (isSuccess) {
-                iconDiv.className = "w-14 h-14 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm";
-                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                iconEl.className = "w-14 h-14 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm";
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
             } else {
-                iconDiv.className = "w-14 h-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm";
-                iconDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                iconEl.className = "w-14 h-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm";
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
             }
-            showModal('alertModal');
+
+            const modal = document.getElementById('alertModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
         }
 
         function closeAlertModal() {
-            hideModal('alertModal');
+            const modal = document.getElementById('alertModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
         }
 
         function escapeHtml(str) {
-            if (!str) return "";
-            return str
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(f => '>')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
     </script>
 </body>
